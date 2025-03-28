@@ -16,8 +16,8 @@ if uploaded_file:
         if not all(col in df.columns for col in required_columns):
             st.error("❌ Uploaded file is missing one or more required columns. Please make sure the export includes all needed fields.")
         else:
-            # Remove rows with blank or missing quantity values
-            df = df[df["orders orderitems__quantity"].notna() & (df["orders orderitems__quantity"].astype(str).str.strip() != "")]
+            # Replace blank or missing quantity with 0
+            df["orders orderitems__quantity"] = pd.to_numeric(df["orders orderitems__quantity"], errors="coerce").fillna(0).astype(int)
 
             # Parse date columns
             df["regular_checkin"] = pd.to_datetime(df["regular_checkin"], errors="coerce")
@@ -30,7 +30,6 @@ if uploaded_file:
 
             # Drop any rows still missing required values
             df = df.dropna(subset=["regular_checkin", "regular_checkout"])
-            df["orders orderitems__quantity"] = df["orders orderitems__quantity"].astype(int)
 
             # Dropdown to select events
             event_names = sorted(df["name"].dropna().unique())
