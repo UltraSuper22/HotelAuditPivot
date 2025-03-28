@@ -20,6 +20,12 @@ if uploaded_file:
             df["regular_checkin"] = pd.to_datetime(df["regular_checkin"], errors="coerce")
             df["regular_checkout"] = pd.to_datetime(df["regular_checkout"], errors="coerce")
             df["realeventstartdate"] = pd.to_datetime(df["realeventstartdate"], errors="coerce")
+
+            # Replace blank hotel/room with placeholders
+            df["events hotels - hotelid__name"] = df["events hotels - hotelid__name"].fillna("Unknown Hotel")
+            df["events hotelrooms - requiresitem__name"] = df["events hotelrooms - requiresitem__name"].fillna("Unknown Room")
+
+            # Drop any rows still missing required values
             df = df.dropna(subset=["regular_checkin", "regular_checkout", "orders orderitems__quantity"])
             df["orders orderitems__quantity"] = df["orders orderitems__quantity"].astype(int)
 
@@ -41,13 +47,18 @@ if uploaded_file:
                         for _, row in df_event.iterrows():
                             if pd.isna(row["regular_checkin"]) or pd.isna(row["regular_checkout"]):
                                 continue
+
                             nights = pd.date_range(start=row["regular_checkin"], end=row["regular_checkout"] - pd.Timedelta(days=1))
+
+                            hotel = row["events hotels - hotelid__name"]
+                            room = row["events hotelrooms - requiresitem__name"]
+
                             for night in nights:
                                 for _ in range(row["orders orderitems__quantity"]):
                                     expanded_rows.append({
                                         "Event": row["name"],
-                                        "Hotel": row.get("events hotels - hotelid__name", "Unknown Hotel"),
-                                        "Room": row.get("events hotelrooms - requiresitem__name", "Unknown Room"),
+                                        "Hotel": hotel,
+                                        "Room": room,
                                         "Stay Date": night.date()
                                     })
 
@@ -77,4 +88,3 @@ if uploaded_file:
                             st.info(f"ℹ️ No data to pivot for {event_date}.")
     except Exception as e:
         st.error(f"💥 Something went wrong: {e}")
-
