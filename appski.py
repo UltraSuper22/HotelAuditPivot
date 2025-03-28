@@ -63,4 +63,3 @@ if uploaded_file:
                 file_name=f"pivot_{event_date}.csv",
                 mime="text/csv"
             )
-Add main Streamlit app
