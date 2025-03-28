@@ -16,6 +16,9 @@ if uploaded_file:
         if not all(col in df.columns for col in required_columns):
             st.error("❌ Uploaded file is missing one or more required columns. Please make sure the export includes all needed fields.")
         else:
+            # Remove rows with blank or missing quantity values
+            df = df[df["orders orderitems__quantity"].notna() & (df["orders orderitems__quantity"].astype(str).str.strip() != "")]
+
             # Parse date columns
             df["regular_checkin"] = pd.to_datetime(df["regular_checkin"], errors="coerce")
             df["regular_checkout"] = pd.to_datetime(df["regular_checkout"], errors="coerce")
@@ -26,7 +29,7 @@ if uploaded_file:
             df["events hotelrooms - requiresitem__name"] = df["events hotelrooms - requiresitem__name"].fillna("Unknown Room")
 
             # Drop any rows still missing required values
-            df = df.dropna(subset=["regular_checkin", "regular_checkout", "orders orderitems__quantity"])
+            df = df.dropna(subset=["regular_checkin", "regular_checkout"])
             df["orders orderitems__quantity"] = df["orders orderitems__quantity"].astype(int)
 
             # Dropdown to select events
@@ -88,3 +91,4 @@ if uploaded_file:
                             st.info(f"ℹ️ No data to pivot for {event_date}.")
     except Exception as e:
         st.error(f"💥 Something went wrong: {e}")
+
